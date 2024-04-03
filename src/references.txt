@@ -1,0 +1,11 @@
+"111: ['TLR03', 'TLR04'],"
+"112: ['TLR03', 'TLR04'],"
+"113: ['TLR03', 'TLR04'],"
+
+			[s]		[messpunkte]	[s]	[messpunkte]	[s]	[s]
+file_id	episode		start		dt	SzOnLoc			tend	tend_sec	tsz		tsz_sec	dt_s
+111		15:42:30	15:40:46	104	L mesial temp	43101	215.505		34974	174.87	40.635
+112		17:04:35	17:02:51	104	L mesial temp	38828	194.14		26999	134.995	59.145
+113		19:42:49	19:41:06	103	R mesial temp	35820	179.1		25562	127.81	51.29
+									
+		sampling frequency = 200 Hz							
