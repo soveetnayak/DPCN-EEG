@@ -32,7 +32,7 @@ Scheme: b/f seizure + seizure + a/f seizure = 2+10+2
 Length of the fragments, separately in the three regions, must be identical.
 '''
 
-def fragmentize_data(data, dt, tstart, tend):
+def fragmentize_data(data):
 
     channels = data.columns[1:]
 
@@ -77,3 +77,19 @@ def channel_cleaning(data):
     # Save the cleaned data to a new CSV file
     cleaned_data_df = pd.DataFrame(channel_data)
     return cleaned_data_df
+
+#Usage
+data = pd.read_csv('../data/111g0L_filtered.csv')
+truncated_data = truncate_data(data, 104, 34974, 43101)
+channel_cleaning(truncated_data)
+fragmentize_data(truncated_data)
+
+data = pd.read_csv('../data/112g0L_filtered.csv')
+truncated_data = truncate_data(data, 104, 26999, 38828)
+channel_cleaning(truncated_data)
+fragmentize_data(truncated_data)
+
+data = pd.read_csv('../data/113g0R_filtered.csv')
+truncated_data = truncate_data(data, 103, 25562, 35820)
+channel_cleaning(truncated_data)
+fragmentize_data(truncated_data)
