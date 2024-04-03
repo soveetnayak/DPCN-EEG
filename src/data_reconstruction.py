@@ -24,6 +24,7 @@ def truncate_data(data, dt, tstart, tend):
 
     # Save the truncated data to a new CSV file
     truncated_data_df = pd.DataFrame(truncated_data)
+
     return truncated_data_df
 
 '''
@@ -32,64 +33,57 @@ Scheme: b/f seizure + seizure + a/f seizure = 2+10+2
 Length of the fragments, separately in the three regions, must be identical.
 '''
 
-def fragmentize_data(data):
-
+def fragmentize_data(data, filename):
     channels = data.columns[1:]
+    len = data.shape[0]
+    fragment_length = len//14
 
-    # Extract data for each channel as a NumPy array
     channel_data = {}
     for channel in channels:
-        channel_data[channel] = data[channel].to_numpy()
+        channel_data[channel] = data[channel]
 
-    # Fragmentize data into 14 parts
-    fragmentized_data = {}
-    for channel, data in channel_data.items():
-        fragmentized_data[channel] = []
-        fragment_size = int(len(data)/14)
-        for i in range(0, len(data), fragment_size):
-            fragmentized_data[channel].append(data[i:i+fragment_size])
+    # Fragmentize data
+    for i in range(14):
+        fragment = {}
+        for channel, data in channel_data.items():
+            fragment[channel] = data[i*fragment_length:(i+1)*fragment_length]
+        fragment_df = pd.DataFrame(fragment)
+        fragment_df.to_csv(filename.replace('.csv', f'_fragment_{i}.csv'))
 
-    # Return the fragmentized data
-    return fragmentized_data
 
 '''
 Remove reference channels and any channels that start with G, F, I. Column names must be only the channel names without any other characters in the string.
-Reference channels after cleaning: TLR03, TLR04
+Reference channels after cleaning: "b'SEEG TLR03'","b'SEEG TLR04'"
 '''
 
 def channel_cleaning(data):
-    # Columns start with channel 1
+    data = data.drop(columns=["b\'SEEG TLR03\'", "b\'SEEG TLR04\'"])
+
     channels = data.columns[1:]
     cleaned_channels = []
-    
-    # b'SEEG TBAL1' -> TBAL1
+
+    # "b'SEEG TBAL1'" -> "TBAL1"
     for channel in channels:
-        cleaned_channels.append(channel.split()[-1].decode('utf-8'))
+        cleaned_channels.append(channel.split()[-1].replace("'", ""))
+    # Rename the columns
+    data.columns = [''] + cleaned_channels
+    # Remove any channels that start with G, F, I
+    data = data.drop(columns=[channel for channel in cleaned_channels if channel.startswith(('G', 'F', 'I'))])
 
-    # Remove reference channels and any channels that start with G, F, I
-    cleaned_channels = [channel for channel in cleaned_channels if not channel.startswith('G') and not channel.startswith('F') and not channel.startswith('I') and channel not in ['TLR03', 'TLR04']]
-
-    # Extract data for each channel as a NumPy array
-    channel_data = {}
-    for channel in cleaned_channels:
-        channel_data[channel] = data[channel].to_numpy()
-
-    # Save the cleaned data to a new CSV file
-    cleaned_data_df = pd.DataFrame(channel_data)
-    return cleaned_data_df
+    return data
 
 #Usage
 data = pd.read_csv('../data/111g0L_filtered.csv')
 truncated_data = truncate_data(data, 104, 34974, 43101)
-channel_cleaning(truncated_data)
-fragmentize_data(truncated_data)
+cleaned_data = channel_cleaning(truncated_data)
+fragmentize_data(cleaned_data, '../data/111g0L_filtered.csv')
 
 data = pd.read_csv('../data/112g0L_filtered.csv')
 truncated_data = truncate_data(data, 104, 26999, 38828)
-channel_cleaning(truncated_data)
-fragmentize_data(truncated_data)
+cleaned_data = channel_cleaning(truncated_data)
+fragmentize_data(cleaned_data, '../data/112g0L_filtered.csv')
 
 data = pd.read_csv('../data/113g0R_filtered.csv')
 truncated_data = truncate_data(data, 103, 25562, 35820)
-channel_cleaning(truncated_data)
-fragmentize_data(truncated_data)
+cleaned_data = channel_cleaning(truncated_data)
+fragmentize_data(cleaned_data, '../data/113g0R_filtered.csv')

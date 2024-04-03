@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 '''
-Step 1- To construct correlation matrix (CM), use Phase Correlation. So, you see dimension of a CM must be n × n; n= no of channels in time series.
+Construct correlation matrix (CM), use Phase Correlation. So, you see dimension of a CM must be n × n; n= no of channels in time series.
 '''
 def construct_correlation_matrix(data):
     # Columns start with channel 1
@@ -23,7 +23,7 @@ def construct_correlation_matrix(data):
     return correlation_matrix
 
 '''
-Step 2- Binarize the matrix by picking up threshold in such a way so that all the channels are recruited in the network.
+Binarize the matrix by picking up threshold in such a way so that all the channels are recruited in the network.
 '''
 
 def binarize_correlation_matrix(correlation_matrix, threshold):
@@ -33,3 +33,10 @@ def binarize_correlation_matrix(correlation_matrix, threshold):
     # Return the binary matrix
     return binary_matrix
 
+# Usage
+for i in range(1):
+    data = pd.read_csv(f'../data/111g0L_filtered_fragment_{i}.csv')
+    correlation_matrix = construct_correlation_matrix(data)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix, 0.3)
+    # Save as 0 and 1
+    np.savetxt(f'../data/111g0L_filtered_fragment_{i}_binary.csv', binary_matrix, fmt='%d', delimiter=',')
