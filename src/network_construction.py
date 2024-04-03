@@ -34,9 +34,24 @@ def binarize_correlation_matrix(correlation_matrix, threshold):
     return binary_matrix
 
 # Usage
-for i in range(1):
+
+for i in range(14):
     data = pd.read_csv(f'../data/111g0L_filtered_fragment_{i}.csv')
     correlation_matrix = construct_correlation_matrix(data)
     binary_matrix = binarize_correlation_matrix(correlation_matrix, 0.3)
     # Save as 0 and 1
     np.savetxt(f'../data/111g0L_filtered_fragment_{i}_binary.csv', binary_matrix, fmt='%d', delimiter=',')
+
+for i in range(14):
+    data = pd.read_csv(f'../data/112g0L_filtered_fragment_{i}.csv')
+    correlation_matrix = construct_correlation_matrix(data)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix, 0.3)
+    # Save as 0 and 1
+    np.savetxt(f'../data/112g0L_filtered_fragment_{i}_binary.csv', binary_matrix, fmt='%d', delimiter=',')
+
+for i in range(14):
+    data = pd.read_csv(f'../data/113g0R_filtered_fragment_{i}.csv')
+    correlation_matrix = construct_correlation_matrix(data)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix, 0.3)
+    # Save as 0 and 1
+    np.savetxt(f'../data/113g0R_filtered_fragment_{i}_binary.csv', binary_matrix, fmt='%d', delimiter=',')
