@@ -44,26 +44,60 @@ class Kuramoto:
         suma = sum([(np.e ** (1j * i)) for i in angles_vec])
         return abs(suma / len(angles_vec))
 
-df = pd.read_csv("../data/111g0L_filtered_fragment_0_binary.csv", header=None)
-A = df.values
-print(A)
-adjMatrix = np.array(A)
-n = len(adjMatrix)
+def generate_plot(file):     
+    df = pd.read_csv("../data/111g0L_filtered_fragment_10_binary.csv", header=None)
+    data_num = file.split('/')[-1].split('_')[0]
+    fragment_num = file.split('_')[-2]
+    print("Generating plot for data_num: ", data_num, " and fragment_num: ", fragment_num)
 
-# model = Kuramoto(coupling=3, dt=0.01, T=1000, n_nodes=n)
-# x = model.run(adjMatrix)
-# print(x.shape)
+    A = df.values
+    print(A)
+    adjMatrix = np.array(A)
+    n = len(adjMatrix)
 
-# Run model with different coupling (K) parameters
-coupling_vals = np.linspace(0, 3, 500)
-runs = []
-for coupling in tqdm(coupling_vals):
-    model = Kuramoto(coupling=coupling, dt=0.01, T=1000, n_nodes=n)
-    model.natfreqs = np.random.normal(1, 0.4, size=n)  # reset natural frequencies
-    act_mat = model.run(adjMatrix)
-    runs.append(act_mat)
+    # model = Kuramoto(coupling=3, dt=0.01, T=1000, n_nodes=n)
+    # x = model.run(adjMatrix)
+    # print(x.shape)
 
-runs_array = np.array(runs)
+    # Run model with different coupling (K) parameters
+    coupling_vals = np.linspace(0, 3, 500)
+    runs = []
+    for coupling in tqdm(coupling_vals):
+        model = Kuramoto(coupling=coupling, dt=0.01, T=1000, n_nodes=n)
+        model.natfreqs = np.random.normal(1, 0.4, size=n)  # reset natural frequencies
+        act_mat = model.run(adjMatrix)
+        runs.append(act_mat)
+
+    runs_array = np.array(runs)
+
+    mean_phase_coherences = []
+    std_phase_coherences = []
+    for i, coupling in tqdm(enumerate(coupling_vals)):
+        # mean over 80k steps
+        r_values = [model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T]
+        r_mean = np.mean(r_values)
+        r_std = np.std(r_values)
+        mean_phase_coherences.append(r_mean)
+        std_phase_coherences.append(r_std)
+
+    # Plot mean phase coherence curve
+    plt.figure()
+    Kc = np.sqrt(8 / np.pi) * np.std(model.natfreqs) # analytical result (from paper)
+    plt.vlines(Kc, 0, 1, linestyles='--', color='orange', label='analytical prediction')
+    plt.plot(coupling_vals, mean_phase_coherences, color='blue', label='Mean Phase Coherence')
+    plt.xlabel('Coupling (K)')
+    plt.ylabel('Mean Phase Coherence')
+    plt.title('Mean Phase Coherence vs Coupling Strength')
+    plt.legend()
+    plt.grid(True)
+    # plt.show()
+    plt.savefig('../figures/' + data_num + '_' + fragment_num + '.png')
+
+# run for files 111g0L_filtered_fragment_i_binary.csv where i>=0 and i<14
+for i in range(14):
+    generate_plot("../data/111g0L_filtered_fragment_" + str(i) + "_binary.csv")
+    generate_plot("../data/112g0L_filtered_fragment_" + str(i) + "_binary.csv")
+    generate_plot("../data/113g0R_filtered_fragment_" + str(i) + "_binary.csv")
 
 ''' 
 plt.figure()
@@ -86,28 +120,6 @@ sns.despine()
 # plt.show()
 # plt.savefig('../figures/11g0L_0_R_vs_K.png')
 '''
-
-mean_phase_coherences = []
-std_phase_coherences = []
-for i, coupling in tqdm(enumerate(coupling_vals)):
-    # mean over 80k steps
-    r_mean = np.mean([model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T])
-    mean_phase_coherences.append(r_mean)
-    r_std = np.std([model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T])
-    std_phase_coherences.append(r_std)
-
-# Plot mean phase coherence curve
-plt.figure()
-Kc = np.sqrt(8 / np.pi) * np.std(model.natfreqs) # analytical result (from paper)
-plt.vlines(Kc, 0, 1, linestyles='--', color='orange', label='analytical prediction')
-plt.plot(coupling_vals, mean_phase_coherences, color='blue', label='Mean Phase Coherence')
-plt.xlabel('Coupling (K)')
-plt.ylabel('Mean Phase Coherence')
-plt.title('Mean Phase Coherence vs Coupling Strength')
-plt.legend()
-plt.grid(True)
-plt.show()
-# plt.savefig('../figures/11g0L_0_Mean_Phase_Coherence_vs_K.png')
 
 '''
 # Plot the line for mean phase coherence with standard deviation as shaded region
