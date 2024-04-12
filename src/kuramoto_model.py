@@ -58,7 +58,7 @@ n = len(adjMatrix)
 coupling_vals = np.linspace(0, 3, 500)
 runs = []
 for coupling in tqdm(coupling_vals):
-    model = Kuramoto(coupling=coupling, dt=0.1, T=100, n_nodes=n)
+    model = Kuramoto(coupling=coupling, dt=0.01, T=1000, n_nodes=n)
     model.natfreqs = np.random.normal(1, 0.4, size=n)  # reset natural frequencies
     act_mat = model.run(adjMatrix)
     runs.append(act_mat)
@@ -91,9 +91,9 @@ mean_phase_coherences = []
 std_phase_coherences = []
 for i, coupling in tqdm(enumerate(coupling_vals)):
     # mean over 80k steps
-    r_mean = np.mean([model.phase_coherence(vec) for vec in runs_array[i, :, -1000:].T])
+    r_mean = np.mean([model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T])
     mean_phase_coherences.append(r_mean)
-    r_std = np.std([model.phase_coherence(vec) for vec in runs_array[i, :, -1000:].T])
+    r_std = np.std([model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T])
     std_phase_coherences.append(r_std)
 
 # Plot mean phase coherence curve
