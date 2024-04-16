@@ -65,7 +65,7 @@ def plot_phase_coupling(file, save=False):
     n = len(adjMatrix)
 
     # Run model with different coupling (K) parameters (0.2, 0.4, 0.6, 0.8)
-    coupling_vals = np.linspace(0, 0.6, 100)
+    coupling_vals = np.linspace(0, 1, 100)
     runs = []
     for coupling in tqdm(coupling_vals):
         model = Kuramoto(coupling=coupling, dt=0.01, T=1000, n_nodes=n)
@@ -78,7 +78,7 @@ def plot_phase_coupling(file, save=False):
     mean_phase_coherences = []
     std_phase_coherences = []
     for i, coupling in tqdm(enumerate(coupling_vals)):
-        r_values = [model.phase_coherence(vec) for vec in runs_array[i, :, -1000:].T]
+        r_values = [model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T]
         r_mean = np.mean(r_values)
         r_std = np.std(r_values)
         mean_phase_coherences.append(r_mean)
@@ -92,7 +92,7 @@ def plot_phase_coupling(file, save=False):
         coupling_vals, mean_phase_coherences, color="blue", label="Mean Phase Coherence"
     )
     plt.xlabel("Coupling (K)")
-    plt.ylabel("Phase Coherence")
+    plt.ylabel("Phase Coherence (R)")
     plt.title("Phase Coherence vs Coupling Strength")
     plt.legend()
     plt.grid(True)
@@ -101,55 +101,61 @@ def plot_phase_coupling(file, save=False):
     else:
         plt.show()
 
+
 def plot_parameter_fragment(data_num, save=False):
-    '''
-    For a single time series take few values of coupling(0.2,0.4,0.6,0.8) and plot order parameter wrt the 14 segments.So it's order parameter vs epileptogenic zone i.e 14 segments.
-
+    """
+    For a single time series take few values of coupling and plot order parameter wrt the 14 segments.So it's order parameter vs epileptogenic zone i.e 14 segments.
     The plot will give info of how the oscillators are synchronized throughout different epileptogenic zone at various couplings.
-    '''
+    """
 
-    data = [ pd.read_csv(f'../data/binary/{data_num}_{i}.csv', header=None) for i in range(14) ]
+    data = [
+        pd.read_csv(f"../data/binary/{data_num}_{i}.csv", header=None)
+        for i in range(14)
+    ]
     data = [df.values for df in data]
     data = np.array(data)
     n_nodes = data[0].shape[0]
-    coupling_vals = np.linspace(0.2, 0.8, 4)
+    coupling_vals = [0.2, 0.4, 0.6, 0.8]
     order_parameters = []
-    
-    print(f'Generating plot for data_num: {data_num}')
+
+    print(f"Generating plot for data_num: {data_num}")
 
     for coupling in coupling_vals:
-        print(f'Running for coupling: {coupling}')
+        print(f"Running for coupling: {coupling}")
         model = Kuramoto(coupling=coupling, dt=0.01, T=1000, n_nodes=n_nodes)
-        model.natfreqs = np.random.normal(1, 0.4, size=n_nodes)  # reset natural frequencies
+        model.natfreqs = np.random.normal(
+            1, 0.1, size=n_nodes
+        )  # reset natural frequencies
         order_params = []
         for i in range(14):
-            print(f'Running for segment: {i}')
+            # print(f'Running for segment: {i}')
             act_mat = model.run(data[i])
-            r_values = [model.phase_coherence(vec) for vec in act_mat[:, -1000:].T]
+            r_values = [model.phase_coherence(vec) for vec in act_mat[:, -80000:].T]
             r_mean = np.mean(r_values)
             order_params.append(r_mean)
         order_parameters.append(order_params)
 
     order_parameters = np.array(order_parameters)
     print(order_parameters.shape)
-    
+
     plt.figure()
     for i, coupling in enumerate(coupling_vals):
-        plt.plot(order_parameters[i], label=f'Coupling: {coupling}')
-    plt.xlabel('Epileptogenic Zone')
-    plt.ylabel('Order Parameter')
-    plt.title('Order Parameter vs Epileptogenic Zone')
-    plt.legend()
+        plt.plot(order_parameters[i], label=f"Coupling: {coupling}")
+    plt.xlabel("Epileptogenic Zone")
+    plt.ylabel("Order Parameter")
+    plt.title("Order Parameter (R) vs Epileptogenic Zone for " + data_num)
+    plt.legend(loc="upper right", bbox_to_anchor=(1, 1), fontsize="small")
     plt.grid(True)
 
     if save:
-        plt.savefig(f'../figures/{data_num}_order_zone.png')
+        plt.savefig(f"../figures/{data_num}_order_zone.png")
     else:
         plt.show()
 
+
 # Usage
 
-plot_phase_coupling("../data/binary/111g0L_10.csv")
+# plot_phase_coupling("../data/binary/111g0L_10.csv")
 # plot_parameter_fragment('111g0L')
 
 # for i in range(14):
