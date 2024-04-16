@@ -29,29 +29,31 @@ Binarize the matrix by picking up threshold in such a way so that all the channe
 def binarize_correlation_matrix(correlation_matrix, threshold):
     binary_matrix = np.zeros(correlation_matrix.shape)
     binary_matrix[correlation_matrix > threshold] = 1
-
+    # Set diagonal to 0
+    np.fill_diagonal(binary_matrix, 0)
     # Return the binary matrix
     return binary_matrix
 
 # Usage
+threshold = 0.2
 
 for i in range(14):
     data = pd.read_csv(f'../data/111g0L_filtered_fragment_{i}.csv')
     correlation_matrix = construct_correlation_matrix(data)
-    binary_matrix = binarize_correlation_matrix(correlation_matrix, 0.3)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix, threshold)
     # Save as 0 and 1
-    np.savetxt(f'../data/111g0L_filtered_fragment_{i}_binary.csv', binary_matrix, fmt='%d', delimiter=',')
+    np.savetxt(f'../data/binary/111g0L_{i}.csv', binary_matrix, fmt='%d', delimiter=',')
 
 for i in range(14):
     data = pd.read_csv(f'../data/112g0L_filtered_fragment_{i}.csv')
     correlation_matrix = construct_correlation_matrix(data)
-    binary_matrix = binarize_correlation_matrix(correlation_matrix, 0.3)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix, threshold)
     # Save as 0 and 1
-    np.savetxt(f'../data/112g0L_filtered_fragment_{i}_binary.csv', binary_matrix, fmt='%d', delimiter=',')
+    np.savetxt(f'../data/binary/112g0L_{i}.csv', binary_matrix, fmt='%d', delimiter=',')
 
 for i in range(14):
     data = pd.read_csv(f'../data/113g0R_filtered_fragment_{i}.csv')
     correlation_matrix = construct_correlation_matrix(data)
-    binary_matrix = binarize_correlation_matrix(correlation_matrix, 0.3)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix, threshold)
     # Save as 0 and 1
-    np.savetxt(f'../data/113g0R_filtered_fragment_{i}_binary.csv', binary_matrix, fmt='%d', delimiter=',')
+    np.savetxt(f'../data/binary/113g0R_{i}.csv', binary_matrix, fmt='%d', delimiter=',')

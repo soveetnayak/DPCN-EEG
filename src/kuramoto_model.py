@@ -14,6 +14,7 @@ import pandas as pd
 from tqdm import tqdm
 from scipy.integrate import odeint
 
+
 class Kuramoto:
     def __init__(self, coupling, dt, T, n_nodes):
         self.dt = dt
@@ -25,13 +26,17 @@ class Kuramoto:
     def derivative(self, angles_vec, t, adj_mat, k):
         angles_i, angles_j = np.meshgrid(angles_vec, angles_vec)
         interactions = adj_mat * np.sin(angles_j - angles_i)  # Aij * sin(j-i)
-        dxdt = self.natfreqs + k * interactions.sum(axis=0)  # sum over incoming interactions
+        dxdt = self.natfreqs + k * interactions.sum(
+            axis=0
+        )  # sum over incoming interactions
         return dxdt
 
     def integrate(self, angles_vec, adj_mat):
         n_interactions = (adj_mat != 0).sum(axis=0)  # number of incoming interactions
-        k = self.coupling / n_interactions  # normalize coupling by number of interactions
-        t = np.linspace(0, self.T, int(self.T/self.dt))
+        k = (
+            self.coupling / n_interactions
+        )  # normalize coupling by number of interactions
+        t = np.linspace(0, self.T, int(self.T / self.dt))
         timeseries = odeint(self.derivative, angles_vec, t, args=(adj_mat, k))
         return timeseries.T
 
@@ -44,27 +49,27 @@ class Kuramoto:
         suma = sum([(np.e ** (1j * i)) for i in angles_vec])
         return abs(suma / len(angles_vec))
 
-def generate_plot(file):     
-    df = pd.read_csv("../data/111g0L_filtered_fragment_10_binary.csv", header=None)
-    data_num = file.split('/')[-1].split('_')[0]
-    fragment_num = file.split('_')[-2]
-    print("Generating plot for data_num: ", data_num, " and fragment_num: ", fragment_num)
+
+def plot_phase_coupling(file, save=False):
+    df = pd.read_csv(file, header=None)
+    file = file.split("/")[-1]
+    data_num = file.split("_")[-2]
+    fragment_num = file.split("_")[-1].split(".")[0]
+    print(
+        "Generating plot for data_num: ", data_num, " and fragment_num: ", fragment_num
+    )
 
     A = df.values
     print(A)
     adjMatrix = np.array(A)
     n = len(adjMatrix)
 
-    # model = Kuramoto(coupling=3, dt=0.01, T=1000, n_nodes=n)
-    # x = model.run(adjMatrix)
-    # print(x.shape)
-
-    # Run model with different coupling (K) parameters
-    coupling_vals = np.linspace(0, 3, 500)
+    # Run model with different coupling (K) parameters (0.2, 0.4, 0.6, 0.8)
+    coupling_vals = np.linspace(0, 0.6, 100)
     runs = []
     for coupling in tqdm(coupling_vals):
         model = Kuramoto(coupling=coupling, dt=0.01, T=1000, n_nodes=n)
-        model.natfreqs = np.random.normal(1, 0.4, size=n)  # reset natural frequencies
+        model.natfreqs = np.random.normal(1, 0.1, size=n)  # reset natural frequencies
         act_mat = model.run(adjMatrix)
         runs.append(act_mat)
 
@@ -73,8 +78,7 @@ def generate_plot(file):
     mean_phase_coherences = []
     std_phase_coherences = []
     for i, coupling in tqdm(enumerate(coupling_vals)):
-        # mean over 80k steps
-        r_values = [model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T]
+        r_values = [model.phase_coherence(vec) for vec in runs_array[i, :, -1000:].T]
         r_mean = np.mean(r_values)
         r_std = np.std(r_values)
         mean_phase_coherences.append(r_mean)
@@ -82,56 +86,73 @@ def generate_plot(file):
 
     # Plot mean phase coherence curve
     plt.figure()
-    Kc = np.sqrt(8 / np.pi) * np.std(model.natfreqs) # analytical result (from paper)
-    plt.vlines(Kc, 0, 1, linestyles='--', color='orange', label='analytical prediction')
-    plt.plot(coupling_vals, mean_phase_coherences, color='blue', label='Mean Phase Coherence')
-    plt.xlabel('Coupling (K)')
-    plt.ylabel('Mean Phase Coherence')
-    plt.title('Mean Phase Coherence vs Coupling Strength')
+    Kc = np.sqrt(8 / np.pi) * np.std(model.natfreqs)  # analytical result (from paper)
+    plt.vlines(Kc, 0, 1, linestyles="--", color="orange", label="analytical prediction")
+    plt.plot(
+        coupling_vals, mean_phase_coherences, color="blue", label="Mean Phase Coherence"
+    )
+    plt.xlabel("Coupling (K)")
+    plt.ylabel("Phase Coherence")
+    plt.title("Phase Coherence vs Coupling Strength")
     plt.legend()
     plt.grid(True)
-    # plt.show()
-    plt.savefig('../figures/' + data_num + '_' + fragment_num + '.png')
+    if save:
+        plt.savefig("../figures/" + data_num + "_" + fragment_num + "_mean.png")
+    else:
+        plt.show()
 
-# run for files 111g0L_filtered_fragment_i_binary.csv where i>=0 and i<14
-for i in range(14):
-    generate_plot("../data/111g0L_filtered_fragment_" + str(i) + "_binary.csv")
-    generate_plot("../data/112g0L_filtered_fragment_" + str(i) + "_binary.csv")
-    generate_plot("../data/113g0R_filtered_fragment_" + str(i) + "_binary.csv")
+def plot_parameter_fragment(data_num, save=False):
+    '''
+    For a single time series take few values of coupling(0.2,0.4,0.6,0.8) and plot order parameter wrt the 14 segments.So it's order parameter vs epileptogenic zone i.e 14 segments.
 
-''' 
-plt.figure()
-for i, coupling in tqdm(enumerate(coupling_vals)):
-    r_values = [model.phase_coherence(vec) for vec in runs_array[i, :, -80000:].T]
-    r_mean = np.mean(r_values)
-    r_std = np.std(r_values)
-    plt.errorbar(coupling, r_mean, yerr=r_std, fmt='o', c='yellow', alpha=0.7)
-    plt.scatter(coupling, r_mean, c='red', s=20, alpha=0.7)
+    The plot will give info of how the oscillators are synchronized throughout different epileptogenic zone at various couplings.
+    '''
 
-# Predicted Kc – analytical result (from paper)
-Kc = np.sqrt(8 / np.pi) * np.std(model.natfreqs) # analytical result (from paper)
-plt.vlines(Kc, 0, 1, linestyles='--', color='orange', label='analytical prediction')
+    data = [ pd.read_csv(f'../data/binary/{data_num}_{i}.csv', header=None) for i in range(14) ]
+    data = [df.values for df in data]
+    data = np.array(data)
+    n_nodes = data[0].shape[0]
+    coupling_vals = np.linspace(0.2, 0.8, 4)
+    order_parameters = []
+    
+    print(f'Generating plot for data_num: {data_num}')
 
-plt.legend()
-plt.grid(linestyle='--', alpha=0.8)
-plt.ylabel('Order Parameter (R)')
-plt.xlabel('Coupling (K)')
-sns.despine()
-# plt.show()
-# plt.savefig('../figures/11g0L_0_R_vs_K.png')
-'''
+    for coupling in coupling_vals:
+        print(f'Running for coupling: {coupling}')
+        model = Kuramoto(coupling=coupling, dt=0.01, T=1000, n_nodes=n_nodes)
+        model.natfreqs = np.random.normal(1, 0.4, size=n_nodes)  # reset natural frequencies
+        order_params = []
+        for i in range(14):
+            print(f'Running for segment: {i}')
+            act_mat = model.run(data[i])
+            r_values = [model.phase_coherence(vec) for vec in act_mat[:, -1000:].T]
+            r_mean = np.mean(r_values)
+            order_params.append(r_mean)
+        order_parameters.append(order_params)
 
-'''
-# Plot the line for mean phase coherence with standard deviation as shaded region
-plt.figure()
-plt.plot(coupling_vals, mean_phase_coherences, color='blue', label='Mean Phase Coherence')
-plt.fill_between(coupling_vals, np.array(mean_phase_coherences) - np.array(std_phase_coherences),
-                    np.array(mean_phase_coherences) + np.array(std_phase_coherences), color='blue', alpha=0.3)
-plt.xlabel('Coupling (K)')
-plt.ylabel('Mean Phase Coherence')
-plt.title('Mean Phase Coherence vs Coupling Strength')
-plt.legend()
-plt.grid(True)
-plt.show() 
-# plt.savefig('../figures/11g0L_0_Mean_Phase_Coherence_with_std_vs_K.png')
-'''
+    order_parameters = np.array(order_parameters)
+    print(order_parameters.shape)
+    
+    plt.figure()
+    for i, coupling in enumerate(coupling_vals):
+        plt.plot(order_parameters[i], label=f'Coupling: {coupling}')
+    plt.xlabel('Epileptogenic Zone')
+    plt.ylabel('Order Parameter')
+    plt.title('Order Parameter vs Epileptogenic Zone')
+    plt.legend()
+    plt.grid(True)
+
+    if save:
+        plt.savefig(f'../figures/{data_num}_order_zone.png')
+    else:
+        plt.show()
+
+# Usage
+
+plot_phase_coupling("../data/binary/111g0L_10.csv")
+# plot_parameter_fragment('111g0L')
+
+# for i in range(14):
+#     generate_plot("../data/binary/111g0L_" + str(i) + ".csv", save=True)
+#     generate_plot("../data/binary/112g0L_" + str(i) + ".csv", save=True)
+#     generate_plot("../data/binary/113g0R_" + str(i) + ".csv", save=True)
