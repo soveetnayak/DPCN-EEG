@@ -14,7 +14,7 @@ def filter_data(filename):
     for channel in channels:
         channel_data[channel] = data[channel].to_numpy()
 
-    # Example: Filter for Delta band (1-4 Hz) with 200 Hz sampling rate
+    # Filter for Delta band (1-4 Hz) with 200 Hz sampling rate
     lowcut = 1
     highcut = 4
     fs = 200

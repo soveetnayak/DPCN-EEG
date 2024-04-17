@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+import networkx as nx
 '''
 Construct correlation matrix (CM), use Phase Correlation. So, you see dimension of a CM must be n × n; n= no of channels in time series.
 '''
@@ -26,34 +26,40 @@ def construct_correlation_matrix(data):
 Binarize the matrix by picking up threshold in such a way so that all the channels are recruited in the network.
 '''
 
-def binarize_correlation_matrix(correlation_matrix, threshold):
-    binary_matrix = np.zeros(correlation_matrix.shape)
-    binary_matrix[correlation_matrix > threshold] = 1
-    # Set diagonal to 0
-    np.fill_diagonal(binary_matrix, 0)
-    # Return the binary matrix
+def binarize_correlation_matrix(correlation_matrix):
+    # Start as threshold = 1 with step -0.1
+    # As soon as all the channels are recruited, stop and return the binary matrix
+    # GCC of the binary matrix is the network
+    threshold = 1
+    while True:
+        binary_matrix = np.where(correlation_matrix > threshold, 1, 0)
+        # diagonal elems 0
+        np.fill_diagonal(binary_matrix, 0)
+        
+        # Check if all the channels are recruited. Recruited means the graph is connected.        
+        if nx.is_connected(nx.convert_matrix.from_numpy_array(binary_matrix)):
+            print(f'Threshold: {threshold}')
+            break
+
+        if threshold < 0:
+            break
+        threshold -= 0.1
+
     return binary_matrix
 
-# Usage
-threshold = 0.2
 
 for i in range(14):
+    print(f'Processing 111g0L_{i}')
     data = pd.read_csv(f'../data/111g0L_filtered_fragment_{i}.csv')
     correlation_matrix = construct_correlation_matrix(data)
-    binary_matrix = binarize_correlation_matrix(correlation_matrix, threshold)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix)
     # Save as 0 and 1
     np.savetxt(f'../data/binary/111g0L_{i}.csv', binary_matrix, fmt='%d', delimiter=',')
 
 for i in range(14):
+    print(f'Processing 112g0L_{i}')
     data = pd.read_csv(f'../data/112g0L_filtered_fragment_{i}.csv')
     correlation_matrix = construct_correlation_matrix(data)
-    binary_matrix = binarize_correlation_matrix(correlation_matrix, threshold)
+    binary_matrix = binarize_correlation_matrix(correlation_matrix)
     # Save as 0 and 1
     np.savetxt(f'../data/binary/112g0L_{i}.csv', binary_matrix, fmt='%d', delimiter=',')
-
-for i in range(14):
-    data = pd.read_csv(f'../data/113g0R_filtered_fragment_{i}.csv')
-    correlation_matrix = construct_correlation_matrix(data)
-    binary_matrix = binarize_correlation_matrix(correlation_matrix, threshold)
-    # Save as 0 and 1
-    np.savetxt(f'../data/binary/113g0R_{i}.csv', binary_matrix, fmt='%d', delimiter=',')

@@ -18,15 +18,15 @@ def convert_hdf5_to_csv(hdf5_file_path, output_csv_path):
 
 # Usage for multiple files
 input_hdf5_files = [ 
-    r'111g0L.h5',
-    r'112g0L.h5',
-    r'113g0R.h5',
+    r'../data/111g0L.h5',
+    r'../data/112g0L.h5',
+    r'../data/113g0R.h5',
 ]
 
 output_csv_paths = [ 
-    r'111g0L.csv',
-    r'112g0L.csv',
-    r'113g0R.csv',
+    r'../data/111g0L.csv',
+    r'../data/112g0L.csv',
+    r'../data/113g0R.csv',
 ]
 
 for input_hdf5_file, output_csv_path in zip(input_hdf5_files, output_csv_paths):
