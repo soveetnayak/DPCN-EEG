@@ -1,1 +1,5 @@
-/data/
+/data/binary/*
+/data/filtered/*
+/data/fragments/*
+/data/*.csv
+/data/*.h5
